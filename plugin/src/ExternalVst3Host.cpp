@@ -58,6 +58,37 @@ ExternalVst3Host::ScanResult ExternalVst3Host::scanInstalledVst3() {
   return result;
 }
 
+std::unique_ptr<ExternalVst3Host> ExternalVst3Host::createFromFile(
+    const juce::File& file, double sampleRate, int maximumBlockSize,
+    juce::PluginDescription& description, juce::String& error) {
+#if JUCE_PLUGINHOST_VST3
+  if (!file.exists() || sampleRate <= 0.0 || maximumBlockSize <= 0) {
+    error = "The selected VST3 file is invalid.";
+    return {};
+  }
+  auto manager = getFormatManager();
+  juce::AudioPluginFormat* vst3 = nullptr;
+  for (int i = 0; i < manager->getNumFormats(); ++i) {
+    auto* format = manager->getFormat(i);
+    if (format != nullptr && format->getName().containsIgnoreCase("VST3")) {
+      vst3 = format;
+      break;
+    }
+  }
+  if (vst3 == nullptr) {
+    error = "VST3 hosting is not available in this build.";
+    return {};
+  }
+  juce::OwnedArray<juce::PluginDescription> descriptions;
+  vst3->findAllTypesForFile(descriptions, file.getFullPathName());
+  if (descriptions.isEmpty()) {
+    error = "No VST3 plug-in could be identified in the selected file.";
+    return {};
+  }
+  description = *descriptions.getFirst();
+  return create(description, sampleRate, maximumBlockSize, error);
+}
+
 std::unique_ptr<ExternalVst3Host> ExternalVst3Host::create(
     const juce::PluginDescription& description,
     double sampleRate,

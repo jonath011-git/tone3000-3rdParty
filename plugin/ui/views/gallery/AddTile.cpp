@@ -1,5 +1,7 @@
 #include "AddTile.h"
 
+#include <memory>
+
 #include "GalleryGeometry.h"
 #include "core/Help.h"
 #include "core/Icons.h"
@@ -37,6 +39,21 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
   std::vector<ContextMenu::Item> items{
       {"Paste", Icon::ClipboardPaste, help::Key::pasteBlock,
        [this] { if (onPaste) onPaste(blockId()); }, /*disabled=*/!canPaste_},
+      {"Load VST3", Icon::File, help::Key::loadFileTile,
+       [this] {
+         vst3Chooser_ = std::make_unique<juce::FileChooser>(
+             "Choose a VST3 plug-in", juce::File(), "*.vst3");
+         auto flags = juce::FileBrowserComponent::openMode |
+                      juce::FileBrowserComponent::canSelectFiles |
+                      juce::FileBrowserComponent::canSelectDirectories;
+         vst3Chooser_->launchAsync(flags, [this](const juce::FileChooser& chooser) {
+           const auto file = chooser.getResult();
+           if (!file.exists()) return;
+           const auto error = services().chain.loadExternalVst3(file, blockId());
+           if (error.isNotEmpty()) services().toast.show(error);
+           vst3Chooser_.reset();
+         });
+       }},
   };
   for (auto& item : localLoadItems()) items.push_back(std::move(item));
   return items;

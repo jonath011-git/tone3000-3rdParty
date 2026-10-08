@@ -11,14 +11,16 @@
 #include "BlockSpectrum.h"
 #include "ChainOversampler.h"
 #include "NamEngine.h"
+#include "ExternalVst3Host.h"
 
 // Chain block types
-enum class ChainBlockType { NAM, IR, INSERT };
+enum class ChainBlockType { NAM, IR, INSERT, EXTERNAL_VST3 };
 
 inline juce::String chainBlockTypeToString(ChainBlockType type) {
   switch (type) {
     case ChainBlockType::NAM: return "nam";
     case ChainBlockType::INSERT: return "insert";
+    case ChainBlockType::EXTERNAL_VST3: return "externalVst3";
     case ChainBlockType::IR: break;
   }
   return "ir";
@@ -27,6 +29,7 @@ inline juce::String chainBlockTypeToString(ChainBlockType type) {
 inline ChainBlockType chainBlockTypeFromString(const juce::String& s) {
   if (s == "nam") return ChainBlockType::NAM;
   if (s == "insert") return ChainBlockType::INSERT;
+  if (s == "externalVst3") return ChainBlockType::EXTERNAL_VST3;
   return ChainBlockType::IR;
 }
 
@@ -129,6 +132,12 @@ struct ChainBlock {
           return true;
     return false;
   }
+
+  // External VST3 identity/state. These are inert for NAM/IR/INSERT.
+  juce::String externalVst3Name;
+  juce::String externalVst3Identifier;
+  juce::MemoryBlock externalVst3State;
+  std::unique_ptr<ExternalVst3Host> externalVst3Host;
 
   // State flags
   bool loaded;   // True when active model is loaded and ready

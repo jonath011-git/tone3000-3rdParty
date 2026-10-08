@@ -31,6 +31,10 @@ public:
 
   ~ExternalVst3Host();
 
+  // Re-prepares the wrapped plug-in for a new chain-domain rate/block size.
+  // Must run off the audio thread.
+  void prepare(double sampleRate, int maximumBlockSize);
+
   ExternalVst3Host(const ExternalVst3Host&) = delete;
   ExternalVst3Host& operator=(const ExternalVst3Host&) = delete;
 

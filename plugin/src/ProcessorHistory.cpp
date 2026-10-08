@@ -149,6 +149,37 @@ void TONE3000Processor::reconcileChainFromTree(const juce::ValueTree& chainState
       continue;
     }
 
+    if (type == ChainBlockType::EXTERNAL_VST3) {
+      block->externalVst3Name = blockState.getProperty("externalVst3Name").toString();
+      block->externalVst3Identifier = blockState.getProperty("externalVst3Identifier").toString();
+      const auto stateVar = blockState.getProperty("externalVst3State");
+      if (stateVar.isBinaryData()) block->externalVst3State = *stateVar.getBinaryData();
+
+      juce::PluginDescription desc;
+      desc.name = block->externalVst3Name;
+      desc.fileOrIdentifier = block->externalVst3Identifier;
+      desc.pluginFormatName = "VST3";
+      juce::String error;
+      block->externalVst3Host = ExternalVst3Host::create(
+          desc, chainSampleRate(), chainDomainBlockSize(), error);
+      if (block->externalVst3Host != nullptr) {
+        if (!block->externalVst3State.isEmpty())
+          block->externalVst3Host->restoreState(block->externalVst3State.getData(),
+                                                static_cast<int>(block->externalVst3State.getSize()),
+                                                error);
+        block->loaded = true;
+        block->modelLoading = false;
+      } else {
+        block->loaded = false;
+        block->loadFailed = true;
+        block->modelLoading = false;
+        juce::Logger::writeToLog("[VST3] Restore failed for " + block->externalVst3Name +
+                                 ": " + error);
+      }
+      target.push_back(std::move(block));
+      continue;
+    }
+
     const int activeModelId = blockState.getProperty("activeModelId", 0);
     const bool modelChanged = block->activeModelId != activeModelId;
     const juce::String toneJson = blockState.getProperty("toneJson").toString();

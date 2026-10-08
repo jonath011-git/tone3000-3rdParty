@@ -201,7 +201,13 @@ juce::ValueTree TONE3000Processor::serializeBlockSettings(const ChainBlock& bloc
   blockState.setProperty("outputGain", block.outputGainNormalized, nullptr);
   blockState.setProperty("mix", block.mixNormalized, nullptr);
 
-  if (block.type != ChainBlockType::INSERT) {
+  if (block.type == ChainBlockType::EXTERNAL_VST3) {
+    blockState.setProperty("externalVst3Name", block.externalVst3Name, nullptr);
+    blockState.setProperty("externalVst3Identifier", block.externalVst3Identifier, nullptr);
+    if (!block.externalVst3State.isEmpty())
+      blockState.setProperty("externalVst3State", juce::var(block.externalVst3State), nullptr);
+    blockState.appendChild(block.eq.toValueTree(), nullptr);
+  } else if (block.type != ChainBlockType::INSERT) {
     blockState.setProperty("toneId", block.toneId, nullptr);
     blockState.setProperty("toneJson", block.toneJson, nullptr);
     blockState.setProperty("activeModelId", block.activeModelId, nullptr);
@@ -227,7 +233,14 @@ void TONE3000Processor::applyBlockSettings(ChainBlock& block, const juce::ValueT
   if (block.namEngine != nullptr)
     block.namEngine->setSlimmableSize(block.namSlimSize);
 
-  if (block.type != ChainBlockType::INSERT) {
+  if (block.type == ChainBlockType::EXTERNAL_VST3) {
+    block.externalVst3Name = blockState.getProperty("externalVst3Name").toString();
+    block.externalVst3Identifier = blockState.getProperty("externalVst3Identifier").toString();
+    const auto stateVar = blockState.getProperty("externalVst3State");
+    if (stateVar.isBinaryData()) block.externalVst3State = *stateVar.getBinaryData();
+    block.eq.restoreFromValueTree(blockState.getChildWithName("Eq"));
+    prepareBlockForChainRate(block);
+  } else if (block.type != ChainBlockType::INSERT) {
     // A missing Eq child restores as flat. The restored bands are then
     // designed for the live chain rate: this is the creation funnel for
     // duplicated, pasted and undo/preset-restored blocks, none of which

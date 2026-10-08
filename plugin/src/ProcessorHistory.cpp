@@ -152,6 +152,7 @@ void TONE3000Processor::reconcileChainFromTree(const juce::ValueTree& chainState
     if (type == ChainBlockType::EXTERNAL_VST3) {
       block->externalVst3Name = blockState.getProperty("externalVst3Name").toString();
       block->externalVst3Identifier = blockState.getProperty("externalVst3Identifier").toString();
+      block->externalVst3UniqueId = blockState.getProperty("externalVst3UniqueId", 0);
       const auto stateVar = blockState.getProperty("externalVst3State");
       if (stateVar.isBinaryData()) block->externalVst3State = *stateVar.getBinaryData();
 
@@ -159,6 +160,7 @@ void TONE3000Processor::reconcileChainFromTree(const juce::ValueTree& chainState
       desc.name = block->externalVst3Name;
       desc.fileOrIdentifier = block->externalVst3Identifier;
       desc.pluginFormatName = "VST3";
+      desc.uniqueId = block->externalVst3UniqueId;
       juce::String error;
       block->externalVst3Host = ExternalVst3Host::create(
           desc, chainSampleRate(), chainDomainBlockSize(), error);

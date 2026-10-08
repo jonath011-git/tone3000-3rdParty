@@ -34,6 +34,7 @@ protected:
 private:
   Routing routing_ = Routing::none;
   bool canPaste_ = false;
+  std::unique_ptr<juce::FileChooser> vst3Chooser_;
 };
 
 }  // namespace t3k::ui

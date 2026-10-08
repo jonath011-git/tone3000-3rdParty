@@ -125,9 +125,19 @@ ToneSummary parseTone(const juce::var& v) {
 ChainItem parseItem(const juce::var& v) {
   ChainItem item;
   item.blockId = str(v, "blockId").toStdString();
-  item.isInsert = str(v, "kind", "insert") != "tone";
+  const auto kind = str(v, "kind", "insert");
+  item.isInsert = kind == "insert";
+  item.externalVst3 = kind == "externalVst3";
+  item.externalVst3Name = str(v, "externalVst3Name");
   if (item.isInsert)
     return item;
+  if (item.externalVst3) {
+    item.tone.title = item.externalVst3Name;
+    item.tone.format = "externalVst3";
+    item.loaded = boolean(v, "loaded", false);
+    item.params = parseParams(v["params"]);
+    return item;
+  }
   item.tone = parseTone(v["tone"]);
   item.activeModelId = integer(v, "activeModelId");
   item.loaded = boolean(v, "loaded", false);

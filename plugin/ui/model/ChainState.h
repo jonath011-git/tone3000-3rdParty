@@ -109,6 +109,8 @@ struct ToneSummary {
 struct ChainItem {
   std::string blockId;
   bool isInsert = true;
+  bool externalVst3 = false;
+  juce::String externalVst3Name;
 
   // Tone-block fields (unused for inserts).
   ToneSummary tone;

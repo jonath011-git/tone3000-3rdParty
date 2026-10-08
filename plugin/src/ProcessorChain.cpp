@@ -280,6 +280,7 @@ juce::var TONE3000Processor::loadExternalVst3(const juce::File& vst3File,
   auto block = std::make_unique<ChainBlock>(blockId, ChainBlockType::EXTERNAL_VST3);
   block->externalVst3Name = description.name;
   block->externalVst3Identifier = description.fileOrIdentifier;
+  block->externalVst3UniqueId = description.uniqueId;
   block->externalVst3Host = std::move(host);
   block->externalVst3State = block->externalVst3Host->saveState();
   block->loaded = true;

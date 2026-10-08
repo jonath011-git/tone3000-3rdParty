@@ -205,8 +205,10 @@ juce::ValueTree TONE3000Processor::serializeBlockSettings(const ChainBlock& bloc
     blockState.setProperty("externalVst3Name", block.externalVst3Name, nullptr);
     blockState.setProperty("externalVst3Identifier", block.externalVst3Identifier, nullptr);
     blockState.setProperty("externalVst3UniqueId", block.externalVst3UniqueId, nullptr);
-    if (!block.externalVst3State.isEmpty())
-      blockState.setProperty("externalVst3State", juce::var(block.externalVst3State), nullptr);
+    const juce::MemoryBlock currentState = block.externalVst3Host != nullptr
+        ? block.externalVst3Host->saveState() : block.externalVst3State;
+    if (!currentState.isEmpty())
+      blockState.setProperty("externalVst3State", juce::var(currentState), nullptr);
     blockState.appendChild(block.eq.toValueTree(), nullptr);
   } else if (block.type != ChainBlockType::INSERT) {
     blockState.setProperty("toneId", block.toneId, nullptr);

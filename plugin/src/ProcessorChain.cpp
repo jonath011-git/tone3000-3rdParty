@@ -976,6 +976,8 @@ juce::var TONE3000Processor::getChainState(int knownRevision) const {
   struct BlockRow {
     juce::String id;
     bool isInsert = false;
+    bool isExternalVst3 = false;
+    juce::String externalVst3Name;
     juce::var toneSummary;
     int toneId = 0;
     int activeModelId = 0;
@@ -1021,6 +1023,18 @@ juce::var TONE3000Processor::getChainState(int knownRevision) const {
         row.rtFailed = block->rtProcessingFailed.exchange(false);
         if (block->type == ChainBlockType::INSERT) {
           row.isInsert = true;
+          out.push_back(std::move(row));
+          continue;
+        }
+        if (block->type == ChainBlockType::EXTERNAL_VST3) {
+          row.isExternalVst3 = true;
+          row.externalVst3Name = block->externalVst3Name;
+          row.loaded = block->loaded;
+          row.enabled = block->enabled;
+          row.inputGain = block->inputGainNormalized;
+          row.outputGain = block->outputGainNormalized;
+          row.mix = block->mixNormalized;
+          row.eq = block->eq.toVar();
           out.push_back(std::move(row));
           continue;
         }

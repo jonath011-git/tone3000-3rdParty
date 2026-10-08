@@ -578,7 +578,21 @@ void TONE3000Processor::prepareChain(std::vector<std::unique_ptr<ChainBlock>>& b
   const double chainRate = chainSampleRate();
 
   for (auto& block : blocks) {
-    if (block->type == ChainBlockType::NAM) {
+    if (block->type == ChainBlockType::EXTERNAL_VST3) {
+      try {
+        if (block->externalVst3Host != nullptr)
+          juce::MidiBuffer externalMidi;
+          block->externalVst3Host->processBlock(buffer, externalMidi);
+      } catch (...) {
+        block->loaded = false;
+        block->rtProcessingFailed.store(true);
+        bumpChainRevision();
+        buffer.copyFrom(0, 0, dryScratch, 0, 0, numSamples);
+        if (numChannels > 1)
+          buffer.copyFrom(1, 0, dryScratch, 1, 0, numSamples);
+        continue;
+      }
+    } else if (block->type == ChainBlockType::NAM) {
       if (block->namEngine != nullptr) {
         block->namEngine->prepare(domainBlockSize);
         DBG("NAM engine prepared for block: " << block->id);

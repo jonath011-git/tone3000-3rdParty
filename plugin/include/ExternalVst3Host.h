@@ -21,6 +21,11 @@ public:
   // never from processBlock().
   static ScanResult scanInstalledVst3();
 
+  // Creates an instance directly from a VST3 module/bundle selected by the user.
+  static std::unique_ptr<ExternalVst3Host> createFromFile(
+      const juce::File& file, double sampleRate, int maximumBlockSize,
+      juce::PluginDescription& description, juce::String& error);
+
   // Creates one instance from a previously discovered description.
   // Call off the audio thread; caller owns the returned host.
   static std::unique_ptr<ExternalVst3Host> create(

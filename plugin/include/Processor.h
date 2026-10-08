@@ -171,6 +171,10 @@ public:
   // position and user params (enabled/gains/mix); the new tone's first model
   // is queued for background loading.
   bool swapTone(const std::string& blockId, const juce::String& toneJsonString);
+  // Load an installed VST3 into an INSERT slot. The plug-in path is resolved
+  // and instantiated off the audio thread; the wrapped processor runs in the
+  // normal chain callback after PRE EQ and before POST EQ/mix.
+  juce::var loadExternalVst3(const juce::File& vst3File, const std::string& targetInsertId = {});
   // Best-effort tone metadata re-sync: merge a fresh /tones/{id} API payload
   // into every non-local block holding that tone (both lanes). The stored
   // models array is preserved per block (native persists only the active

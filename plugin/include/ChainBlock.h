@@ -136,6 +136,7 @@ struct ChainBlock {
   // External VST3 identity/state. These are inert for NAM/IR/INSERT.
   juce::String externalVst3Name;
   juce::String externalVst3Identifier;
+  int externalVst3UniqueId{0};
   juce::MemoryBlock externalVst3State;
   std::unique_ptr<ExternalVst3Host> externalVst3Host;
 

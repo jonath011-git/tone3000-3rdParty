@@ -97,6 +97,13 @@ ExternalVst3Host::ExternalVst3Host(
     std::unique_ptr<juce::AudioPluginInstance> plugin)
     : pluginDescription(std::move(description)), instance(std::move(plugin)) {}
 
+void ExternalVst3Host::prepare(double sampleRate, int maximumBlockSize) {
+  if (instance == nullptr || sampleRate <= 0.0 || maximumBlockSize <= 0)
+    return;
+  instance->releaseResources();
+  instance->prepareToPlay(sampleRate, maximumBlockSize);
+}
+
 ExternalVst3Host::~ExternalVst3Host() {
   // Instance teardown may execute arbitrary third-party code. The owner must
   // destroy this object away from the real-time audio callback.

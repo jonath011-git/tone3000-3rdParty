@@ -322,6 +322,8 @@ target_sources(${PROJECT_NAME}
         include/BlockSpectrum.h
         src/BlockSpectrum.cpp
         include/ChainBlock.h
+        include/ExternalVst3Host.h
+        src/ExternalVst3Host.cpp
         include/ChainHistory.h
         include/ImageDeck.h
         include/Spread.h
@@ -448,6 +450,13 @@ target_include_directories(${PROJECT_NAME}
 # Defined here too because NAM is linked as a whole-archive flag on
 # macOS/Linux, which doesn't propagate the NAM target's definitions.
 target_compile_definitions(${PROJECT_NAME} PRIVATE NAM_ENABLE_A2_FAST)
+
+# External VST3 hosting is available on desktop targets only. The helper
+# remains compiled on iOS with a clear unsupported-platform result, while
+# JUCE's VST3 host implementation is not enabled in that build.
+if (NOT T3K_IOS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE JUCE_PLUGINHOST_VST3=1)
+endif()
 
 # JUCE modules used
 target_link_libraries(${PROJECT_NAME}

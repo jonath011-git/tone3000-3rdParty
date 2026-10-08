@@ -260,6 +260,67 @@ void TONE3000Processor::queueToneLoad(const std::string& blockId, int modelId,
                            true);
 }
 
+juce::var TONE3000Processor::loadExternalVst3(const juce::File& vst3File,
+                                             const std::string& targetInsertId) {
+  juce::PluginDescription description;
+  juce::String error;
+  auto host = ExternalVst3Host::createFromFile(
+      vst3File, chainSampleRate(), chainDomainBlockSize(), description, error);
+  if (host == nullptr) {
+    juce::DynamicObject::Ptr out = new juce::DynamicObject();
+    out->setProperty("error", error.isNotEmpty() ? error : "Couldn't load the VST3 plug-in.");
+    return out.get();
+  }
+
+  ChainEditFade editFade(*this);
+  juce::ScopedLock lock(chainMutex);
+  pushChainHistory();
+
+  const std::string blockId = juce::Uuid().toString().toStdString();
+  auto block = std::make_unique<ChainBlock>(blockId, ChainBlockType::EXTERNAL_VST3);
+  block->externalVst3Name = description.name;
+  block->externalVst3Identifier = description.fileOrIdentifier;
+  block->externalVst3Host = std::move(host);
+  block->externalVst3State = block->externalVst3Host->saveState();
+  block->loaded = true;
+  block->modelLoading = false;
+  block->loadFailed = false;
+  block->enabled = true;
+  prepareBlockForChainRate(*block);
+
+  Lane* targetLane = nullptr;
+  Lane::iterator slot;
+  if (!targetInsertId.empty()) {
+    for (auto& l : lanes) {
+      auto it = std::find_if(l.begin(), l.end(), [&](const std::unique_ptr<ChainBlock>& b) {
+        return isInsertBlock(b) && b->id == targetInsertId;
+      });
+      if (it != l.end()) {
+        targetLane = &l;
+        slot = it;
+        break;
+      }
+    }
+  }
+  if (targetLane == nullptr) {
+    targetLane = &activeChain();
+    slot = std::find_if(targetLane->begin(), targetLane->end(), isInsertBlock);
+  }
+
+  if (slot != targetLane->end())
+    *slot = std::move(block);
+  else
+    targetLane->push_back(std::move(block));
+
+  alignBranchLaneLengths();
+  bumpChainRevision();
+
+  juce::DynamicObject::Ptr out = new juce::DynamicObject();
+  out->setProperty("blockId", blockId);
+  out->setProperty("name", description.name);
+  return out.get();
+}
+
 std::string TONE3000Processor::loadTone(const juce::String& toneJsonString,
                                         const std::string& targetInsertId) {
   juce::ScopedLock lock(chainMutex);

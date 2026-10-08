@@ -1,6 +1,6 @@
 # External VST3 hosting in the TONE3000 chain
 
-Status: design / implementation plan. This document does not claim that VST3 hosting is implemented yet.
+Status: initial hosting scaffold committed; chain integration and validation remain outstanding.
 
 ## Goal
 
@@ -17,6 +17,12 @@ The feature should work in the Windows VST3 build hosted by REAPER and, where JU
 - `INSERT` is an empty UI/chain slot, not an instantiated third-party plugin.
 - `ChainBlock` owns the current NAM/IR engine and per-block settings. Chain state and history are implemented across `ProcessorChain.cpp`, `ProcessorState.cpp`, `ProcessorHistory.cpp` and preset serialization.
 - The project already links JUCE audio processor modules, but the inspected chain code does not yet provide an external VST3 processor instance or plugin-description persistence.
+
+## Current progress
+
+- Added `ExternalVst3Host.h/.cpp` with desktop VST3 discovery, off-audio-thread instance creation/preparation, a guarded processing entry point, opaque state save/restore, and latency queries.
+- Enabled JUCE's VST3 host module on non-iOS builds and registered the new source files in CMake.
+- This is infrastructure only: the chain model, insert-slot UI, undo/history, session serialization, latency propagation, and Windows compilation/tests are not yet connected or verified.
 
 ## Proposed implementation stages
 

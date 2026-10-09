@@ -29,6 +29,7 @@ public:
 
   std::string loadTone(const juce::String& toneJson, const std::string& targetInsertId) override;
   juce::var loadExternalVst3(const juce::File& file, const std::string& targetInsertId) override;
+  juce::String openExternalVst3Editor(const std::string& blockId) override;
   juce::var loadLocalTonePath(const juce::File& source, const std::string& targetInsertId) override;
   juce::var loadLocalToneUrls(const juce::Array<juce::URL>& sources,
                               const std::string& targetInsertId) override;

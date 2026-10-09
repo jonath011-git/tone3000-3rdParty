@@ -46,12 +46,30 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
          auto flags = juce::FileBrowserComponent::openMode |
                       juce::FileBrowserComponent::canSelectFiles |
                       juce::FileBrowserComponent::canSelectDirectories;
-         vst3Chooser_->launchAsync(flags, [this](const juce::FileChooser& chooser) {
+         // JUCE invokes the async callback from FileChooser::finished().
+         // Do not destroy the chooser or trigger UI/model changes from inside
+         // that callback: loading a plugin can rebuild the gallery and destroy
+         // this tile, which would otherwise destroy the FileChooser while its
+         // own callback is still on the stack.
+         juce::Component::SafePointer<AddTile> safeThis(this);
+         vst3Chooser_->launchAsync(flags, [safeThis](const juce::FileChooser& chooser) {
            const auto file = chooser.getResult();
-           if (!file.exists()) return;
-           const auto error = services().chain.loadExternalVst3(file, blockId());
-           if (error.isNotEmpty()) services().toast.show(error);
-           vst3Chooser_.reset();
+
+           juce::MessageManager::callAsync([safeThis, file] {
+             if (safeThis == nullptr) return;
+
+             if (file.exists()) {
+               const auto error = safeThis->services().chain.loadExternalVst3(
+                   file, safeThis->blockId());
+               if (safeThis != nullptr && error.isNotEmpty())
+                 safeThis->services().toast.show(error);
+             }
+
+             // We're now outside FileChooser::finished(), so destroying the
+             // chooser here cannot invalidate its active callback stack.
+             if (safeThis != nullptr)
+               safeThis->vst3Chooser_.reset();
+           });
          });
        }},
   };

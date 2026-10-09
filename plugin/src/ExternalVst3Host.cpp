@@ -84,7 +84,7 @@ std::unique_ptr<ExternalVst3Host> ExternalVst3Host::createFromFile(
   }
   juce::Logger::writeToLog("[VST3] Discovery start: path=" + file.getFullPathName()
                            + " | exists=" + juce::String(file.exists() ? "yes" : "no")
-                           + " | file=" + juce::String(file.isAFile() ? "yes" : "no")
+                           + " | file=" + juce::String(file.existsAsFile() ? "yes" : "no")
                            + " | directory=" + juce::String(file.isDirectory() ? "yes" : "no")
                            + " | size=" + juce::String(file.getSize())
                            + " | sampleRate=" + juce::String(sampleRate)

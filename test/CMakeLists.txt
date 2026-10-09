@@ -56,6 +56,7 @@ target_sources(DspTests PRIVATE
     ../plugin/src/PresetFile.cpp
     ../plugin/src/PresetManager.cpp
     ../plugin/src/Processor.cpp
+    ../plugin/src/ExternalVst3Host.cpp
     ../plugin/src/ProcessorChain.cpp
     ../plugin/src/ProcessorHistory.cpp
     ../plugin/src/ProcessorModelLoader.cpp

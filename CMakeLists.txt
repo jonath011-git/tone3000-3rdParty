@@ -190,8 +190,8 @@ if (EXISTS "${_juce_vst3_impl}")
 
             return baseID;
         }")
-        string(REPLACE "\\n" "${_juce_vst3_nl}" _juce_vst3_old "${_juce_vst3_old}")
-        string(REPLACE "\\n" "${_juce_vst3_nl}" _juce_vst3_new "${_juce_vst3_new}")
+        string(REPLACE "\n" "${_juce_vst3_nl}" _juce_vst3_old "${_juce_vst3_old}")
+        string(REPLACE "\n" "${_juce_vst3_nl}" _juce_vst3_new "${_juce_vst3_new}")
         string(REPLACE
             "${_juce_vst3_old}"
             "${_juce_vst3_new}"

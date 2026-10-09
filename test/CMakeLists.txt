@@ -56,6 +56,7 @@ target_sources(DspTests PRIVATE
     ../plugin/src/PresetFile.cpp
     ../plugin/src/PresetManager.cpp
     ../plugin/src/Processor.cpp
+    ../plugin/src/CrashDiagnostics.cpp
     ../plugin/src/ExternalVst3Host.cpp
     ../plugin/src/ProcessorChain.cpp
     ../plugin/src/ProcessorHistory.cpp
@@ -121,6 +122,8 @@ target_link_libraries(DspTests
         $<$<PLATFORM_ID:Linux>:-Wl,--no-whole-archive>
         $<$<PLATFORM_ID:Windows>:NAM>
         $<$<PLATFORM_ID:Windows>:-WHOLEARCHIVE:$<TARGET_FILE:NAM>>
+        # CrashDiagnostics uses MiniDumpWriteDump on Windows, including in tests.
+        $<$<PLATFORM_ID:Windows>:dbghelp>
         # dsp_tests.cpp provides main() (JUCE init + InitGoogleTest).
         GTest::gtest
     PUBLIC

@@ -324,6 +324,8 @@ target_sources(${PROJECT_NAME}
         include/ChainBlock.h
         include/ExternalVst3Host.h
         src/ExternalVst3Host.cpp
+        include/CrashDiagnostics.h
+        src/CrashDiagnostics.cpp
         include/ChainHistory.h
         include/ImageDeck.h
         include/Spread.h
@@ -563,6 +565,8 @@ if (APPLE AND NOT HEADLESS)
 endif()
 
 if (WIN32)
+    # MiniDumpWriteDump is used by CrashDiagnostics to preserve a dump for unhandled exceptions.
+    target_link_libraries(${PROJECT_NAME} PRIVATE dbghelp)
     # Prevent windows.h min/max macros from breaking std::min/std::max in AudioDSPTools and plugin code
     target_compile_definitions(${PROJECT_NAME} PUBLIC NOMINMAX)
     if (NOT HEADLESS)

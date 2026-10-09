@@ -38,7 +38,9 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
 
 # C is required since JUCE 9 (lunasvg and other C dependencies).
 project(TONE3000 VERSION ${T3K_VERSION} LANGUAGES C CXX)
-add_compile_options(-fsigned-char)
+if(NOT MSVC)
+    add_compile_options(-fsigned-char)
+endif()
 
 # A toolchain file sets CMAKE_SYSTEM_NAME too late for the block above (it is
 # only read at project()), so T3K_IOS would stay off, the 10.15 macOS floor

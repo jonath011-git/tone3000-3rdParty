@@ -40,6 +40,10 @@ public:
   // Must run off the audio thread.
   void prepare(double sampleRate, int maximumBlockSize);
 
+  // Opens (or brings forward) the plug-in's own editor in a native popup.
+  // Must be called on JUCE's message thread.
+  bool showEditor(juce::String& error);
+
   ExternalVst3Host(const ExternalVst3Host&) = delete;
   ExternalVst3Host& operator=(const ExternalVst3Host&) = delete;
 
@@ -59,9 +63,13 @@ public:
   bool isValid() const noexcept { return instance != nullptr; }
 
 private:
+  class EditorWindow;
+
   ExternalVst3Host(juce::PluginDescription description,
                    std::unique_ptr<juce::AudioPluginInstance> plugin);
 
   juce::PluginDescription pluginDescription;
   std::unique_ptr<juce::AudioPluginInstance> instance;
+  // Declared after instance so the editor window is destroyed first.
+  std::unique_ptr<EditorWindow> editorWindow;
 };

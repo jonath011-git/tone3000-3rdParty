@@ -1,4 +1,5 @@
 #include "ExternalVst3Host.h"
+#include "CrashDiagnostics.h"
 
 #include <algorithm>
 #include <memory>
@@ -81,8 +82,18 @@ std::unique_ptr<ExternalVst3Host> ExternalVst3Host::createFromFile(
     error = "VST3 hosting is not available in this build.";
     return {};
   }
+  juce::Logger::writeToLog("[VST3] Discovery start: path=" + file.getFullPathName()
+                           + " | exists=" + juce::String(file.exists() ? "yes" : "no")
+                           + " | file=" + juce::String(file.isAFile() ? "yes" : "no")
+                           + " | directory=" + juce::String(file.isDirectory() ? "yes" : "no")
+                           + " | size=" + juce::String(file.getSize())
+                           + " | sampleRate=" + juce::String(sampleRate)
+                           + " | maxBlock=" + juce::String(maximumBlockSize));
+  CrashDiagnostics::logEvent("VST3", ("About to ask JUCE to load VST3: " + file.getFullPathName()).toRawUTF8());
   juce::OwnedArray<juce::PluginDescription> descriptions;
   vst3->findAllTypesForFile(descriptions, file.getFullPathName());
+  juce::Logger::writeToLog("[VST3] Discovery returned " + juce::String(descriptions.size())
+                           + " plugin type(s) for " + file.getFullPathName());
   if (descriptions.isEmpty()) {
     error = "No VST3 plug-in could be identified in the selected file.";
     return {};

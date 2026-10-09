@@ -2,6 +2,7 @@
 #include "CrashDiagnostics.h"
 
 #include <algorithm>
+#include <exception>
 #include <memory>
 
 namespace {

@@ -317,7 +317,7 @@ juce::var TONE3000Processor::loadExternalVst3(const juce::File& vst3File,
   bumpChainRevision();
 
   juce::DynamicObject::Ptr out = new juce::DynamicObject();
-  out->setProperty("blockId", blockId);
+  out->setProperty("blockId", juce::String(blockId));
   out->setProperty("name", description.name);
   return out.get();
 }

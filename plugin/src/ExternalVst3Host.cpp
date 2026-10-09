@@ -101,8 +101,17 @@ std::unique_ptr<ExternalVst3Host> ExternalVst3Host::create(
   }
 
   auto manager = getFormatManager();
-  auto* format = manager->getFormatForDescription(description);
-  if (format == nullptr || !format->getName().containsIgnoreCase("VST3")) {
+  juce::AudioPluginFormat* format = nullptr;
+  for (int i = 0; i < manager->getNumFormats(); ++i) {
+    auto* candidate = manager->getFormat(i);
+    if (candidate != nullptr &&
+        candidate->getName() == description.pluginFormatName &&
+        candidate->getName().containsIgnoreCase("VST3")) {
+      format = candidate;
+      break;
+    }
+  }
+  if (format == nullptr) {
     error = "The selected plug-in is not a supported VST3 plug-in.";
     return {};
   }

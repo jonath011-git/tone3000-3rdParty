@@ -41,8 +41,16 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
        [this] { if (onPaste) onPaste(blockId()); }, /*disabled=*/!canPaste_},
       {"Load VST3", Icon::File, help::Key::loadFileTile,
        [this] {
+         // Remember the last directory used for a VST3 so repeated inserts
+         // open in the same place, across editor/app restarts. UiPrefs merges
+         // writes across plugin-host processes.
+         constexpr auto lastVst3DirectoryKey = "t3k.lastVst3Directory";
+         juce::File initialDirectory(services().prefs.get(lastVst3DirectoryKey));
+         if (!initialDirectory.isDirectory())
+           initialDirectory = juce::File();
+
          vst3Chooser_ = std::make_unique<juce::FileChooser>(
-             "Choose a VST3 plug-in", juce::File(), "*.vst3");
+             "Choose a VST3 plug-in", initialDirectory, "*.vst3");
          auto flags = juce::FileBrowserComponent::openMode |
                       juce::FileBrowserComponent::canSelectFiles |
                       juce::FileBrowserComponent::canSelectDirectories;
@@ -59,6 +67,14 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
              if (safeThis == nullptr) return;
 
              if (file.exists()) {
+               // FileChooser returns either a VST3 module file or a .vst3
+               // bundle directory. In both cases its parent is the folder
+               // the user browsed to.
+               const auto selectedDirectory = file.getParentDirectory();
+               if (selectedDirectory.isDirectory())
+                 safeThis->services().prefs.set("t3k.lastVst3Directory",
+                                                selectedDirectory.getFullPathName());
+
                const auto error = safeThis->services().chain.loadExternalVst3(
                    file, safeThis->blockId());
                if (safeThis != nullptr && error.isNotEmpty())

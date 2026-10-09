@@ -175,6 +175,9 @@ public:
   // and instantiated off the audio thread; the wrapped processor runs in the
   // normal chain callback after PRE EQ and before POST EQ/mix.
   juce::var loadExternalVst3(const juce::File& vst3File, const std::string& targetInsertId = {});
+  // Opens the native editor popup for an already loaded external VST3 block.
+  // Empty string means success; otherwise the returned string is user-facing.
+  juce::String openExternalVst3Editor(const std::string& blockId);
   // Best-effort tone metadata re-sync: merge a fresh /tones/{id} API payload
   // into every non-local block holding that tone (both lanes). The stored
   // models array is preserved per block (native persists only the active

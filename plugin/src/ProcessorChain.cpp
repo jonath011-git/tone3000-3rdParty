@@ -260,6 +260,27 @@ void TONE3000Processor::queueToneLoad(const std::string& blockId, int modelId,
                            true);
 }
 
+juce::String TONE3000Processor::openExternalVst3Editor(const std::string& blockId) {
+  if (juce::MessageManager::getInstance() == nullptr ||
+      !juce::MessageManager::getInstance()->isThisTheMessageThread())
+    return "The VST3 editor can only be opened from the UI thread.";
+
+  ExternalVst3Host* host = nullptr;
+  {
+    juce::ScopedLock lock(chainMutex);
+    auto* block = findBlockById(blockId);
+    if (block == nullptr)
+      return "This VST3 block is no longer in the chain.";
+    if (block->type != ChainBlockType::EXTERNAL_VST3 || block->externalVst3Host == nullptr)
+      return "The selected block does not have a loaded VST3 plug-in.";
+    host = block->externalVst3Host.get();
+  }
+
+  juce::String error;
+  return host->showEditor(error) ? juce::String() :
+      (error.isNotEmpty() ? error : "Couldn't open the VST3 plug-in's editor.");
+}
+
 juce::var TONE3000Processor::loadExternalVst3(const juce::File& vst3File,
                                              const std::string& targetInsertId) {
   juce::PluginDescription description;

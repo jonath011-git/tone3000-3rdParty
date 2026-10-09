@@ -156,53 +156,25 @@ CPMAddPackage(
     SOURCE_DIR ${LIB_DIR}/juce
 )
 
-# Some third-party VST3s expose duplicate VST parameter IDs. JUCE uses the
-# VST3 ParamID directly as HostedAudioProcessorParameter::getParameterID(),
-# then asserts that IDs are unique while constructing the parameter tree.
-# Preserve the original (stable) ID for normal parameters, but disambiguate a
-# repeated ID with the parameter's VST index. JUCE lives in gitignored libs/juce,
-# so apply this idempotent patch at configure time.
+# Some third-party VST3s expose duplicate VST parameter IDs. JUCE asserts
+# that HostedAudioProcessorParameter IDs are unique. Add the stable VST parameter
+# index to each ID in the hosted wrapper, ensuring uniqueness without changing
+# the parameter's actual VST3 ParamID used for communication with the plugin.
+# JUCE is downloaded into gitignored libs/juce, so patch it at configure time.
 set(_juce_vst3_impl "${LIB_DIR}/juce/modules/juce_audio_processors_headless/format_types/juce_VST3PluginFormatImpl.h")
 if (EXISTS "${_juce_vst3_impl}")
     file(READ "${_juce_vst3_impl}" _juce_vst3_src)
     if (NOT _juce_vst3_src MATCHES "T3K_VST3_DUPLICATE_PARAM_ID")
-        if (_juce_vst3_src MATCHES "\\r\\n")
-            set(_juce_vst3_nl "\\r\\n")
-        else()
-            set(_juce_vst3_nl "\\n")
-        endif()
-
-        set(_juce_vst3_old
-"        String getParameterID() const override
-        {
-            return String (cachedInfo.id);
-        }")
-        set(_juce_vst3_new
-"        String getParameterID() const override
-        {
-            // T3K_VST3_DUPLICATE_PARAM_ID: preserve stable IDs unless an earlier
-            // parameter already uses this ID; disambiguate only the duplicate.
-            const auto baseID = String (cachedInfo.id);
-
-            for (Steinberg::int32 i = 0; i < vstParamIndex; ++i)
-                if (pluginInstance.getParameterInfoForIndex (i).id == cachedInfo.id)
-                    return baseID + "_" + String (vstParamIndex);
-
-            return baseID;
-        }")
-        string(REPLACE "\n" "${_juce_vst3_nl}" _juce_vst3_old "${_juce_vst3_old}")
-        string(REPLACE "\n" "${_juce_vst3_nl}" _juce_vst3_new "${_juce_vst3_new}")
-        string(REPLACE
-            "${_juce_vst3_old}"
-            "${_juce_vst3_new}"
-            _juce_vst3_src "${_juce_vst3_src}")
-        if (NOT _juce_vst3_src MATCHES "T3K_VST3_DUPLICATE_PARAM_ID")
+        set(_juce_vst3_old "return String (cachedInfo.id);")
+        set(_juce_vst3_new "return String (cachedInfo.id) + \"_\" + String (vstParamIndex); // T3K_VST3_DUPLICATE_PARAM_ID")
+        string(FIND "${_juce_vst3_src}" "${_juce_vst3_old}" _juce_vst3_match)
+        if (_juce_vst3_match EQUAL -1)
             message(FATAL_ERROR
-                "T3K_VST3_DUPLICATE_PARAM_ID: failed to patch ${_juce_vst3_impl}. "
-                "The JUCE source layout likely changed in this version. Update the patch anchor.")
+                "T3K_VST3_DUPLICATE_PARAM_ID: could not find the expected getParameterID() line in ${_juce_vst3_impl}.")
         endif()
+        string(REPLACE "${_juce_vst3_old}" "${_juce_vst3_new}" _juce_vst3_src "${_juce_vst3_src}")
         file(WRITE "${_juce_vst3_impl}" "${_juce_vst3_src}")
-        message(STATUS "Patched JUCE VST3 hosting: disambiguate duplicate parameter IDs")
+        message(STATUS "Patched JUCE VST3 hosting: ensure unique hosted parameter IDs")
     endif()
 endif()
 

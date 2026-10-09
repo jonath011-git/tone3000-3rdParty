@@ -3,6 +3,7 @@
 #include <juce_core/juce_core.h>
 
 #include <exception>
+#include <cstdlib>
 #include <mutex>
 
 #if JUCE_WINDOWS
@@ -88,7 +89,7 @@ void install() {
   std::call_once(installed, [] {
     appendLine("[START] Crash diagnostics installed. PID="
 #if JUCE_WINDOWS
-               + juce::String(static_cast<int64>(GetCurrentProcessId()))
+               + juce::String(static_cast<juce::int64>(GetCurrentProcessId()))
 #else
                + juce::String("unknown")
 #endif

@@ -3,6 +3,7 @@
 #include "NativeEditor.h"
 #endif
 #include "StandaloneStateAutosave.h"
+#include "CrashDiagnostics.h"
 #include <cmath>
 #include <mutex>
 #include <optional>
@@ -41,6 +42,8 @@ TONE3000Processor::TONE3000Processor()
   if (!juce::Logger::getCurrentLogger()) {
     juce::Logger::setCurrentLogger(new juce::FileLogger(getLogFile(), "TONE3000 JUCE Log"));
   }
+
+  CrashDiagnostics::install();
 
   // Heal the per-user app-data folder before anything writes to it: a
   // root-owned folder fails every settings save and drop-stash write while

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <exception>
 #include <memory>
+#include <juce_gui_basics/juce_gui_basics.h>
 
 namespace {
 std::shared_ptr<juce::AudioPluginFormatManager> getFormatManager() {
@@ -168,6 +169,28 @@ std::unique_ptr<ExternalVst3Host> ExternalVst3Host::create(
 #endif
 }
 
+class ExternalVst3Host::EditorWindow final : public juce::DocumentWindow {
+public:
+  EditorWindow(const juce::String& title, juce::AudioProcessorEditor* editor)
+      : juce::DocumentWindow(title,
+                             juce::Desktop::getInstance().getDefaultLookAndFeel().findColour(
+                                 juce::ResizableWindow::backgroundColourId),
+                             juce::DocumentWindow::closeButton) {
+    jassert(editor != nullptr);
+    const int width = juce::jmax(320, editor->getWidth());
+    const int height = juce::jmax(200, editor->getHeight());
+    setUsingNativeTitleBar(true);
+    setResizable(editor->isResizable(), false);
+    setContentOwned(editor, true);
+    centreWithSize(width, height);
+  }
+
+  void closeButtonPressed() override {
+    // Keep the editor instance alive; clicking the block again reopens it.
+    setVisible(false);
+  }
+};
+
 ExternalVst3Host::ExternalVst3Host(
     juce::PluginDescription description,
     std::unique_ptr<juce::AudioPluginInstance> plugin)
@@ -181,10 +204,45 @@ void ExternalVst3Host::prepare(double sampleRate, int maximumBlockSize) {
 }
 
 ExternalVst3Host::~ExternalVst3Host() {
-  // Instance teardown may execute arbitrary third-party code. The owner must
-  // destroy this object away from the real-time audio callback.
+  // The editor references the processor, so destroy the popup before releasing
+  // or destroying the wrapped instance. Both operations stay off the audio thread.
+  editorWindow.reset();
   if (instance != nullptr)
     instance->releaseResources();
+}
+
+bool ExternalVst3Host::showEditor(juce::String& error) {
+  auto* messageManager = juce::MessageManager::getInstance();
+  if (messageManager == nullptr || !messageManager->isThisTheMessageThread()) {
+    error = "The VST3 editor can only be opened on the UI thread.";
+    return false;
+  }
+  if (instance == nullptr) {
+    error = "The VST3 plug-in is no longer loaded.";
+    return false;
+  }
+
+  if (editorWindow != nullptr) {
+    editorWindow->setVisible(true);
+    editorWindow->toFront(true);
+    return true;
+  }
+
+  if (!instance->hasEditor()) {
+    error = "This VST3 plug-in does not provide a graphical editor.";
+    return false;
+  }
+
+  auto* editor = instance->createEditorIfNeeded();
+  if (editor == nullptr) {
+    error = "JUCE could not create the VST3 plug-in's graphical editor.";
+    return false;
+  }
+
+  editorWindow = std::make_unique<EditorWindow>(pluginDescription.name, editor);
+  editorWindow->setVisible(true);
+  editorWindow->toFront(true);
+  return true;
 }
 
 void ExternalVst3Host::processBlock(juce::AudioBuffer<float>& audio,

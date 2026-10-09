@@ -1190,6 +1190,28 @@ juce::var TONE3000Processor::getChainState(int knownRevision) const {
         continue;
       }
 
+      // External VST3 blocks are a distinct chain item. If they are
+      // serialized as "tone", the UI parses them as NAM blocks and routes
+      // clicks to the generic NAM detail card instead of the native editor.
+      if (row.isExternalVst3) {
+        item->setProperty("kind", "externalVst3");
+        item->setProperty("externalVst3Name", row.externalVst3Name);
+        item->setProperty("loaded", row.loaded);
+
+        juce::DynamicObject::Ptr params = new juce::DynamicObject();
+        params->setProperty("enabled", row.enabled);
+        params->setProperty("normalize", row.normalize);
+        params->setProperty("slimSize", row.slimSize);
+        params->setProperty("inputGain", row.inputGain);
+        params->setProperty("outputGain", row.outputGain);
+        params->setProperty("mix", row.mix);
+        params->setProperty("eq", row.eq);
+        item->setProperty("params", juce::var(params.get()));
+
+        chainArray.add(juce::var(item.get()));
+        continue;
+      }
+
       item->setProperty("kind", "tone");
 
       // Slim tone summary, nested (not spread) so runtime fields never

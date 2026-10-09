@@ -53,6 +53,9 @@ juce::var ProcessorBackend::loadExternalVst3(const juce::File& file,
                                               const std::string& targetInsertId) {
   return processor_.loadExternalVst3(file, targetInsertId);
 }
+juce::String ProcessorBackend::openExternalVst3Editor(const std::string& blockId) {
+  return processor_.openExternalVst3Editor(blockId);
+}
 juce::var ProcessorBackend::loadLocalTonePath(const juce::File& source,
                                               const std::string& targetInsertId) {
   return processor_.loadLocalTonePath(source, targetInsertId);

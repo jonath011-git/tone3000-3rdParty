@@ -44,6 +44,8 @@ public:
   // Returns the new block id, "" on failure.
   virtual std::string loadTone(const juce::String& toneJson, const std::string& targetInsertId) = 0;
   virtual juce::var loadExternalVst3(const juce::File& file, const std::string& targetInsertId) = 0;
+  // Empty means the editor opened successfully. Default keeps fixture backends usable.
+  virtual juce::String openExternalVst3Editor(const std::string&) { return {}; }
   // { blockId } or a user-facing { error }.
   virtual juce::var loadLocalTonePath(const juce::File& source, const std::string& targetInsertId) = 0;
   virtual juce::var loadLocalToneUrls(const juce::Array<juce::URL>& sources,

@@ -1,5 +1,9 @@
 #include "ExternalVst3Host.h"
 
+#if JUCE_PLUGINHOST_VST3
+#include <juce_audio_processors/format_types/juce_VST3PluginFormat.h>
+#endif
+
 #include <algorithm>
 #include <memory>
 
@@ -9,7 +13,9 @@ std::shared_ptr<juce::AudioPluginFormatManager> getFormatManager() {
   // Keep the manager and its format objects alive for the process lifetime.
   static auto manager = [] {
     auto value = std::make_shared<juce::AudioPluginFormatManager>();
-    value->addDefaultFormats();
+    #if JUCE_PLUGINHOST_VST3
+    value->addFormat(std::make_unique<juce::VST3PluginFormat>().release());
+#endif
     return value;
   }();
   return manager;
@@ -36,7 +42,7 @@ ExternalVst3Host::ScanResult ExternalVst3Host::scanInstalledVst3() {
 
   const auto locations = vst3->searchPathsForPlugins(
       vst3->getDefaultLocationsToSearch(), true, true);
-  for (int i = 0; i < locations.getNumPaths(); ++i) {
+  for (int i = 0; i < locations.size(); ++i) {
     juce::OwnedArray<juce::PluginDescription> descriptions;
     vst3->findAllTypesForFile(descriptions, locations[i]);
     for (const auto* description : descriptions) {

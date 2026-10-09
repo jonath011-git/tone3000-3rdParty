@@ -1,9 +1,5 @@
 #include "ExternalVst3Host.h"
 
-#if JUCE_PLUGINHOST_VST3
-#include <juce_audio_processors/format_types/juce_VST3PluginFormat.h>
-#endif
-
 #include <algorithm>
 #include <memory>
 
@@ -14,7 +10,7 @@ std::shared_ptr<juce::AudioPluginFormatManager> getFormatManager() {
   static auto manager = [] {
     auto value = std::make_shared<juce::AudioPluginFormatManager>();
     #if JUCE_PLUGINHOST_VST3
-    value->addFormat(std::make_unique<juce::VST3PluginFormat>().release());
+    value->addFormat(new juce::VST3PluginFormat());
 #endif
     return value;
   }();

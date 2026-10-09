@@ -67,6 +67,10 @@ std::unique_ptr<ExternalVst3Host> ExternalVst3Host::createFromFile(
 #if JUCE_PLUGINHOST_VST3
   if (!file.exists() || sampleRate <= 0.0 || maximumBlockSize <= 0) {
     error = "The selected VST3 file is invalid.";
+    CrashDiagnostics::logEvent("VST3-ERROR",
+        ("Rejected file or audio configuration: " + file.getFullPathName()
+         + " | sampleRate=" + juce::String(sampleRate)
+         + " | maxBlock=" + juce::String(maximumBlockSize)).toRawUTF8());
     return {};
   }
   auto manager = getFormatManager();
@@ -91,11 +95,24 @@ std::unique_ptr<ExternalVst3Host> ExternalVst3Host::createFromFile(
                            + " | maxBlock=" + juce::String(maximumBlockSize));
   CrashDiagnostics::logEvent("VST3", ("About to ask JUCE to load VST3: " + file.getFullPathName()).toRawUTF8());
   juce::OwnedArray<juce::PluginDescription> descriptions;
-  vst3->findAllTypesForFile(descriptions, file.getFullPathName());
+  try {
+    vst3->findAllTypesForFile(descriptions, file.getFullPathName());
+  } catch (const std::exception& exception) {
+    error = "An exception occurred while inspecting the selected VST3 plug-in: "
+            + juce::String(exception.what());
+    CrashDiagnostics::logEvent("VST3-ERROR", error.toRawUTF8());
+    return {};
+  } catch (...) {
+    error = "An unknown exception occurred while inspecting the selected VST3 plug-in.";
+    CrashDiagnostics::logEvent("VST3-ERROR", error.toRawUTF8());
+    return {};
+  }
   juce::Logger::writeToLog("[VST3] Discovery returned " + juce::String(descriptions.size())
                            + " plugin type(s) for " + file.getFullPathName());
   if (descriptions.isEmpty()) {
     error = "No VST3 plug-in could be identified in the selected file.";
+    CrashDiagnostics::logEvent("VST3-ERROR",
+        ("No plugin type found for " + file.getFullPathName()).toRawUTF8());
     return {};
   }
   description = *descriptions.getFirst();

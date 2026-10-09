@@ -16,7 +16,7 @@ ChainScreen::ChainScreen(Services& services) : services_(services), gallery_(ser
   const auto saved = services_.prefs.session.find(UiPrefs::kDetailBlockId);
   if (saved != services_.prefs.session.end() && saved->second.isNotEmpty()) {
     const auto id = saved->second.toStdString();
-    if (services_.chain.state().findBlock(id) != nullptr)
+    if (const auto* item = services_.chain.state().findBlock(id); item != nullptr && !item->externalVst3)
       openDetail(id);
     else
       services_.prefs.session.erase(UiPrefs::kDetailBlockId);
@@ -26,6 +26,15 @@ ChainScreen::ChainScreen(Services& services) : services_(services), gallery_(ser
 ChainScreen::~ChainScreen() = default;
 
 void ChainScreen::openDetail(const std::string& blockId) {
+  // External VST3 blocks have their own vendor UI. The generic BlockDetail
+  // card is NAM-specific, so route clicks to the plug-in's native editor.
+  if (const auto* item = services_.chain.state().findBlock(blockId);
+      item != nullptr && item->externalVst3) {
+    const auto error = services_.backend.openExternalVst3Editor(blockId);
+    if (error.isNotEmpty()) services_.toast.show(error);
+    return;
+  }
+
   services_.prefs.session[UiPrefs::kDetailBlockId] = juce::String(blockId);
   detail_ = std::make_unique<BlockDetail>(services_, blockId);
   // The card may ask to close from inside a chain listener callback (its

@@ -87,6 +87,11 @@ std::unique_ptr<ExternalVst3Host> ExternalVst3Host::createFromFile(
   }
   description = *descriptions.getFirst();
   return create(description, sampleRate, maximumBlockSize, error);
+#else
+  juce::ignoreUnused(file, sampleRate, maximumBlockSize, description);
+  error = "VST3 hosting is disabled for this platform/build.";
+  return {};
+#endif
 }
 
 std::unique_ptr<ExternalVst3Host> ExternalVst3Host::create(

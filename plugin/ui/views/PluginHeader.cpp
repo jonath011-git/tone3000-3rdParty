@@ -58,7 +58,7 @@ PluginHeader::PluginHeader(Services& services)
     }
     menu.addSeparator();
     const auto count = vst3library::plugins(services_.prefs).size();
-    menu.addItem(4, juce::String(static_cast<int>(count)) + " plug-in(s) indexé(s)", false);
+    menu.addItem(4, juce::String(static_cast<int>(count)) + juce::String::fromUTF8(" plug-in(s) indexé(s)"), false);
 
     juce::Component::SafePointer<PluginHeader> safeThis(this);
     menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&vst3LibraryButton_),

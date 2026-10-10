@@ -7,6 +7,7 @@
 #include "core/Paint.h"
 #include "core/Theme.h"
 #include "widgets/Clickable.h"
+#include "services/Vst3Library.h"
 
 namespace t3k::ui {
 
@@ -38,6 +39,69 @@ PluginHeader::PluginHeader(Services& services)
       tuner_(custom_icons::kTuningFork, 28, 18) {
   addAndMakeVisible(*logo_);
   addAndMakeVisible(presetBar_);
+
+  vst3LibraryButton_.setTooltip("Bibliothèque de plug-ins VST3");
+  vst3LibraryButton_.onClick = [this] {
+    juce::PopupMenu menu;
+    menu.addItem(1, "Ajouter un dossier...");
+    menu.addItem(2, "Analyser / actualiser la bibliothèque");
+    menu.addSeparator();
+
+    const auto folders = vst3library::folders(services_.prefs);
+    if (folders.empty()) {
+      menu.addItem(3, "Aucun dossier configuré", false);
+    } else {
+      menu.addSectionHeader("Dossiers de la bibliothèque");
+      for (size_t i = 0; i < folders.size(); ++i)
+        menu.addItem(static_cast<int>(100 + i),
+                     "Retirer : " + folders[i].getFullPathName());
+    }
+    menu.addSeparator();
+    const auto count = vst3library::plugins(services_.prefs).size();
+    menu.addItem(4, juce::String(static_cast<int>(count)) + " plug-in(s) indexé(s)", false);
+
+    juce::Component::SafePointer<PluginHeader> safeThis(this);
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&vst3LibraryButton_),
+                       [safeThis, folders](int result) {
+      if (safeThis == nullptr) return;
+      if (result == 1) {
+        juce::File initial;
+        if (!folders.empty()) initial = folders.back();
+        safeThis->vst3FolderChooser_ = std::make_unique<juce::FileChooser>(
+            "Choisir un dossier contenant des plug-ins VST3", initial, "", true);
+        safeThis->vst3FolderChooser_->launchAsync(
+            juce::FileBrowserComponent::openMode |
+                juce::FileBrowserComponent::canSelectDirectories,
+            [safeThis](const juce::FileChooser& chooser) {
+          const auto selected = chooser.getResult();
+          juce::MessageManager::callAsync([safeThis, selected] {
+            if (safeThis == nullptr) return;
+            if (selected.isDirectory()) {
+              vst3library::addFolder(safeThis->services_.prefs, selected);
+              const auto found = vst3library::rescan(safeThis->services_.prefs);
+              safeThis->services_.toast.show("Bibliothèque VST3 actualisée : " +
+                                               juce::String(static_cast<int>(found.size())) +
+                                               " plug-in(s).");
+            }
+            safeThis->vst3FolderChooser_.reset();
+          });
+        });
+      } else if (result == 2) {
+        const auto found = vst3library::rescan(safeThis->services_.prefs);
+        safeThis->services_.toast.show("Bibliothèque VST3 actualisée : " +
+                                         juce::String(static_cast<int>(found.size())) +
+                                         " plug-in(s).");
+      } else if (result >= 100 && static_cast<size_t>(result - 100) < folders.size()) {
+        vst3library::removeFolder(safeThis->services_.prefs,
+                                  static_cast<size_t>(result - 100));
+        const auto found = vst3library::rescan(safeThis->services_.prefs);
+        safeThis->services_.toast.show("Dossier retiré. " +
+                                         juce::String(static_cast<int>(found.size())) +
+                                         " plug-in(s) dans la bibliothèque.");
+      }
+    });
+  };
+  addAndMakeVisible(vst3LibraryButton_);
 
   stereo_.onToggle = [this](bool stereo) {
     if (onStereoToggle) onStereoToggle(stereo);
@@ -128,6 +192,7 @@ void PluginHeader::resized() {
   };
 
   logo_->setBounds(area.getX(), cy - kLogoHeight / 2, kLogoWidth, kLogoHeight);
+  vst3LibraryButton_.setBounds(area.getX() + kLogoWidth + 20, cy - 15, 58, 30);
 
   // Right group, laid out from the right edge: account · undo/redo · tuner ·
   // stereo · presets, 40px apart (16px inside the undo/redo pair).

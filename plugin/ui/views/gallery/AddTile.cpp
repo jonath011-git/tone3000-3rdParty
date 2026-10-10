@@ -7,6 +7,7 @@
 #include "core/Icons.h"
 #include "core/Paint.h"
 #include "core/Theme.h"
+#include "services/Vst3Library.h"
 
 namespace t3k::ui {
 
@@ -39,6 +40,31 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
   std::vector<ContextMenu::Item> items{
       {"Paste", Icon::ClipboardPaste, help::Key::pasteBlock,
        [this] { if (onPaste) onPaste(blockId()); }, /*disabled=*/!canPaste_},
+      {"Bibliothèque VST3", Icon::File, help::Key::loadFileTile,
+       [this] {
+         auto files = vst3library::plugins(services().prefs);
+         if (files.empty()) files = vst3library::rescan(services().prefs);
+
+         juce::PopupMenu menu;
+         if (files.empty()) {
+           menu.addItem(1, "Bibliothèque vide - bouton VST3 en haut pour ajouter des dossiers", false);
+           menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this), [](int) {});
+           return;
+         }
+
+         for (size_t i = 0; i < files.size(); ++i)
+           menu.addItem(static_cast<int>(i + 1), vst3library::displayName(files[i]));
+
+         juce::Component::SafePointer<AddTile> safeThis(this);
+         menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this),
+                            [safeThis, files](int result) {
+           if (safeThis == nullptr || result <= 0 ||
+               static_cast<size_t>(result) > files.size()) return;
+           const auto error = safeThis->services().chain.loadExternalVst3(
+               files[static_cast<size_t>(result - 1)], safeThis->blockId());
+           if (error.isNotEmpty()) safeThis->services().toast.show(error);
+         });
+       }},
       {"Load VST3", Icon::File, help::Key::loadFileTile,
        [this] {
          // Remember the last directory used for a VST3 so repeated inserts

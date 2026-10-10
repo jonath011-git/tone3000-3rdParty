@@ -38,9 +38,9 @@ void AddTile::open() {
 
 std::vector<ContextMenu::Item> AddTile::menuItems() {
   std::vector<ContextMenu::Item> items{
-      {"Paste", Icon::ClipboardPaste, help::Key::pasteBlock,
-       [this] { if (onPaste) onPaste(blockId()); }, /*disabled=*/!canPaste_},
-      {juce::String::fromUTF8("Bibliothèque VST3"), Icon::File, help::Key::loadFileTile,
+      {"Tone3000", Icon::Search, help::Key::addTile,
+       [this] { if (onAdd) onAdd(blockId()); }},
+      {"VST3 Library", Icon::File, help::Key::loadFileTile,
        [this] {
          auto files = vst3library::plugins(services().prefs);
          if (files.empty()) files = vst3library::rescan(services().prefs);
@@ -65,7 +65,7 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
            if (error.isNotEmpty()) safeThis->services().toast.show(error);
          });
        }},
-      {"Load VST3", Icon::File, help::Key::loadFileTile,
+      {"VST3 Local", Icon::File, help::Key::loadFileTile,
        [this] {
          // Remember the last directory used for a VST3 so repeated inserts
          // open in the same place, across plugin-host processes and restarts.
@@ -115,6 +115,8 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
        }},
   };
   for (auto& item : localLoadItems()) items.push_back(std::move(item));
+  items.push_back({"Paste", Icon::ClipboardPaste, help::Key::pasteBlock,
+                   [this] { if (onPaste) onPaste(blockId()); }, /*disabled=*/!canPaste_});
   return items;
 }
 

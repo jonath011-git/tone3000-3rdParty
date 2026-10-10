@@ -40,21 +40,21 @@ PluginHeader::PluginHeader(Services& services)
   addAndMakeVisible(*logo_);
   addAndMakeVisible(presetBar_);
 
-  vst3LibraryButton_.setTooltip("Bibliothèque de plug-ins VST3");
+  vst3LibraryButton_.setTooltip(juce::String::fromUTF8("Bibliothèque de plug-ins VST3"));
   vst3LibraryButton_.onClick = [this] {
     juce::PopupMenu menu;
-    menu.addItem(1, "Ajouter un dossier...");
-    menu.addItem(2, "Analyser / actualiser la bibliothèque");
+    menu.addItem(1, juce::String::fromUTF8("Ajouter un dossier..."));
+    menu.addItem(2, juce::String::fromUTF8("Analyser / actualiser la bibliothèque"));
     menu.addSeparator();
 
     const auto folders = vst3library::folders(services_.prefs);
     if (folders.empty()) {
-      menu.addItem(3, "Aucun dossier configuré", false);
+      menu.addItem(3, juce::String::fromUTF8("Aucun dossier configuré"), false);
     } else {
-      menu.addSectionHeader("Dossiers de la bibliothèque");
+      menu.addSectionHeader(juce::String::fromUTF8("Dossiers de la bibliothèque"));
       for (size_t i = 0; i < folders.size(); ++i)
         menu.addItem(static_cast<int>(100 + i),
-                     "Retirer : " + folders[i].getFullPathName());
+                     juce::String::fromUTF8("Retirer : ") + folders[i].getFullPathName());
     }
     menu.addSeparator();
     const auto count = vst3library::plugins(services_.prefs).size();
@@ -68,7 +68,7 @@ PluginHeader::PluginHeader(Services& services)
         juce::File initial;
         if (!folders.empty()) initial = folders.back();
         safeThis->vst3FolderChooser_ = std::make_unique<juce::FileChooser>(
-            "Choisir un dossier contenant des plug-ins VST3", initial, "", true);
+            juce::String::fromUTF8("Choisir un dossier contenant des plug-ins VST3"), initial, "", true);
         safeThis->vst3FolderChooser_->launchAsync(
             juce::FileBrowserComponent::openMode |
                 juce::FileBrowserComponent::canSelectDirectories,
@@ -79,25 +79,25 @@ PluginHeader::PluginHeader(Services& services)
             if (selected.isDirectory()) {
               vst3library::addFolder(safeThis->services_.prefs, selected);
               const auto found = vst3library::rescan(safeThis->services_.prefs);
-              safeThis->services_.toast.show("Bibliothèque VST3 actualisée : " +
+              safeThis->services_.toast.show(juce::String::fromUTF8("Bibliothèque VST3 actualisée : ") +
                                                juce::String(static_cast<int>(found.size())) +
-                                               " plug-in(s).");
+                                               juce::String::fromUTF8(" plug-in(s)."));
             }
             safeThis->vst3FolderChooser_.reset();
           });
         });
       } else if (result == 2) {
         const auto found = vst3library::rescan(safeThis->services_.prefs);
-        safeThis->services_.toast.show("Bibliothèque VST3 actualisée : " +
+        safeThis->services_.toast.show(juce::String::fromUTF8("Bibliothèque VST3 actualisée : ") +
                                          juce::String(static_cast<int>(found.size())) +
-                                         " plug-in(s).");
+                                         juce::String::fromUTF8(" plug-in(s)."));
       } else if (result >= 100 && static_cast<size_t>(result - 100) < folders.size()) {
         vst3library::removeFolder(safeThis->services_.prefs,
                                   static_cast<size_t>(result - 100));
         const auto found = vst3library::rescan(safeThis->services_.prefs);
-        safeThis->services_.toast.show("Dossier retiré. " +
+        safeThis->services_.toast.show(juce::String::fromUTF8("Dossier retiré. ") +
                                          juce::String(static_cast<int>(found.size())) +
-                                         " plug-in(s) dans la bibliothèque.");
+                                         juce::String::fromUTF8(" plug-in(s) dans la bibliothèque."));
       }
     });
   };

@@ -47,6 +47,8 @@ private:
   IconButton undo_{Icon::Undo2, 28};
   IconButton redo_{Icon::Redo2, 28};
   AccountMenu account_;
+  juce::TextButton vst3LibraryButton_{"VST3"};
+  std::unique_ptr<juce::FileChooser> vst3FolderChooser_;
   bool tunerShown_ = false;
 };
 

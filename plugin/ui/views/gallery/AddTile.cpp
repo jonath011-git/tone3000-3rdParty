@@ -40,14 +40,14 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
   std::vector<ContextMenu::Item> items{
       {"Paste", Icon::ClipboardPaste, help::Key::pasteBlock,
        [this] { if (onPaste) onPaste(blockId()); }, /*disabled=*/!canPaste_},
-      {"Bibliothèque VST3", Icon::File, help::Key::loadFileTile,
+      {juce::String::fromUTF8("Bibliothèque VST3"), Icon::File, help::Key::loadFileTile,
        [this] {
          auto files = vst3library::plugins(services().prefs);
          if (files.empty()) files = vst3library::rescan(services().prefs);
 
          juce::PopupMenu menu;
          if (files.empty()) {
-           menu.addItem(1, "Bibliothèque vide - bouton VST3 en haut pour ajouter des dossiers", false);
+           menu.addItem(1, juce::String::fromUTF8("Bibliothèque vide - bouton VST3 en haut pour ajouter des dossiers"), false);
            menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this), [](int) {});
            return;
          }
@@ -68,8 +68,7 @@ std::vector<ContextMenu::Item> AddTile::menuItems() {
       {"Load VST3", Icon::File, help::Key::loadFileTile,
        [this] {
          // Remember the last directory used for a VST3 so repeated inserts
-         // open in the same place, across editor/app restarts. UiPrefs merges
-         // writes across plugin-host processes.
+         // open in the same place, across plugin-host processes and restarts.
          constexpr auto lastVst3DirectoryKey = "t3k.lastVst3Directory";
          juce::File initialDirectory(services().prefs.get(lastVst3DirectoryKey));
          if (!initialDirectory.isDirectory())

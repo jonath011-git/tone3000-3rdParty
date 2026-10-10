@@ -25,7 +25,7 @@ inline std::vector<juce::File> readPaths(UiPrefs& prefs, const char* key) {
 }
 
 inline void writePaths(UiPrefs& prefs, const char* key, const std::vector<juce::File>& paths) {
-  juce::var array(juce::Array<juce::var>());
+  juce::var array{juce::Array<juce::var>{}};
   for (const auto& path : paths) array.append(path.getFullPathName());
   prefs.setJson(key, array);
 }
